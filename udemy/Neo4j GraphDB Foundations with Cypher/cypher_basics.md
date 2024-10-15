@@ -6,24 +6,22 @@
 ## Querying basic - Nodes and Relationships
 ### MATCH - nodes
 * `MATCH (n) RETURN n`
-* `MATCH (n) RETURN n LIMIT 1`
-* `MATCH (p:Person) RETURN p LIMIT 1`
-* `MATCH (p:Person), (m:Movie) RETURN p, m LIMIT 1`
+* `MATCH (p:Person) RETURN p`
+* `MATCH (p:Person), (m:Movie) RETURN p, m`
 ### MATCH - relationships
 * `MATCH (n1)--(n2) RETURN n1, n2`
-* `MATCH (n1)--(n2) RETURN n1, n2 LIMIT 1`
-* `MATCH (n1)-[r]-(n2) RETURN n1, r, n2 LIMIT 1`
-* `MATCH (n1)<-[r]->(n2) RETURN n1, r, n2 LIMIT 1`
-* `MATCH (n1)-[r]->(n2) RETURN n1, r, n2 LIMIT 1`
-* `MATCH (n1)<-[r]-(n2) RETURN n1, r, n2 LIMIT 1`
-* `MATCH (p:Person)-[r:ACTED_IN]->(m:Movie) RETURN p, r, m LIMIT 1`
-* `MATCH (p:Person)-[r:ACTED_IN | DIRECTED]->(m:Movie) RETURN p, r, m LIMIT 5`
+* `MATCH (n1)-[]-(n2) RETURN n1, n2`
+* `MATCH (n1)-[r]-(n2) RETURN n1, r, n2`
+* `MATCH (n1)<-[r]->(n2) RETURN n1, r, n2`
+* `MATCH (n1)-[r]->(n2) RETURN n1, r, n2`
+* `MATCH (n1)<-[r]-(n2) RETURN n1, r, n2`
+* `MATCH (p:Person)-[r:ACTED_IN]->(m:Movie) RETURN p, r, m`
+* `MATCH (p:Person)-[r:ACTED_IN | DIRECTED]->(m:Movie) RETURN p, r, m`
 * ```
     MATCH (p:Person), (m:Movie)
     MATCH (p)-[r1:ACTED_IN]->(m)
     MATCH (p)-[r2:DIRECTED]->(m)
     RETURN p, r1, r2, m
-    LIMIT 1
     ```
 ### OPTIONAL MATCH
 * ```
@@ -50,14 +48,79 @@
 
 ## Querying basics - Filtering, Transforming
 ### Filter by properties
+* `MATCH (p {name: 'Tom Hanks', born: 1956}) RETURN p`
+* `MATCH (p:Person {name: 'Tom Hanks', born: 1956}) RETURN p`
 ### WHERE clause
-### Comparison Operators (<, >, =, <>, <=, >=)
-### Boolean Operators (AND, ORm IN, NOT)
+* `MATCH (p:Person) WHERE p.name = 'Tom Hanks' AND p.born = 1956 RETURN p`
+### Comparison Operators (=, <>, <, >, <=, >=)
+* `MATCH (p:Person) WHERE p.born = 1956 RETURN p`
+* `MATCH (p:Person) WHERE p.born <> 1956 RETURN p`
+* `MATCH (p:Person) WHERE p.born < 1956 RETURN p`
+* `MATCH (p:Person) WHERE p.born > 1956 RETURN p`
+* `MATCH (p:Person) WHERE p.born <= 1956 RETURN p`
+* `MATCH (p:Person) WHERE p.born >= 1956 RETURN p`
+### Boolean Operators (AND, OR IN, NOT)
+* `MATCH (p:Person) WHERE p.name >= 'T' AND p.name < 'U' RETURN p`
+* `MATCH (p:Person) WHERE p.born = 1955 OR p.born = 1956 OR p.born = 1957 RETURN p`
+* `MATCH (p:Person) WHERE p.born IN [1955, 1956, 1957] RETURN p`
+* `MATCH (p:Person) WHERE NOT (p.born IN [1955, 1956, 1957]) RETURN p`
 ### Boolean Operators with paths
+* ```
+    MATCH (p:Person)-[]->(m:Movie)
+    WHERE m.title = 'Unforgiven' AND (p)-[:ACTED_IN]-(m)
+    RETURN p, m
+    ```
 ### String matching with regular expressions
+> Doc: https://neo4j.com/docs/cypher-manual/current/clauses/where/#query-where-regex
+* `MATCH (m:Movie) WHERE m.title =~ '.*The .*' RETURN m.title`
+* `MATCH (m:Movie) WHERE m.title =~ '(?i).*The .*' RETURN m.title` <- case insensitive match
 ### Transform results (ORDER BY, LIMIT, SKIP, AS)
+* ```
+    MATCH (p:Person)-[r:ACTED_IN]->(m:Movie {title: 'Top Gun'})
+    RETURN p.name, r.earnings
+    ORDER BY r.earnings DESC
+    ```
+* ```
+    MATCH (p:Person)-[r:ACTED_IN]->(m:Movie {title: 'Top Gun'})
+    RETURN p.name, r.earnings
+    ORDER BY r.earnings DESC
+    LIMIT 3
+    ```
+* ```
+    MATCH (p:Person)-[r:ACTED_IN]->(m:Movie {title: 'Top Gun'})
+    RETURN p.name, r.earnings
+    ORDER BY r.earnings DESC
+    SKIP 1
+    LIMIT 3
+    ```
+* ```
+    MATCH (p:Person)-[r:ACTED_IN]->(m:Movie {title: 'Top Gun'})
+    RETURN p.name AS Name, r.earnings AS Earned
+    ORDER BY r.earnings DESC
+    SKIP 1
+    LIMIT 3
+    ```
 ### Exercise \#1
+> Find all of Tom Hanks actor contacts that were born in 1960 or later, and have earned over $10M from a single movie.</br>
+    Return their name, birth year and earnings
+* ```
+    MATCH (p1:Person {name: 'Tom Hanks'})
+    MATCH (p1)-[:HAS_CONTACT]->(p2:Person)
+    MATCH (p2)-[r:ACTED_IN]->(m:Movie)
+    WHERE p2.born >= 1960 AND r.earnings > 10000000
+    RETURN p2.name, p2.born, r.earnings
+    ```
 ### Exercise \#2
+> Order the results from the previous exercise by the highest paid actors first</br>
+    Label the columns `ContactName` and `Born`
+* ```
+    MATCH (p1:Person {name: 'Tom Hanks'})
+    MATCH (p1)-[:HAS_CONTACT]->(p2:Person)
+    MATCH (p2)-[r:ACTED_IN]->(m:Movie)
+    WHERE p2.born >= 1960 AND r.earnings > 10000000
+    RETURN p2.name AS ContactName, p2.born AS Born, r.earnings AS Earned
+    ORDER BY Earned DESC
+    ```
 
 ## Querying basics - Aggregation and other basic functions
 ### Removing Duplicates with DISTINCT
