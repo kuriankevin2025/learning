@@ -11,7 +11,7 @@
 ### MATCH - relationships
 * `MATCH (n1)--(n2) RETURN n1, n2`
 * `MATCH (n1)-[]-(n2) RETURN n1, n2`
-* `MATCH (n1)-[r]-(n2) RETURN n1, r, n2`
+* `MATCH (n1)<-[]->(n2) RETURN n1, n2`
 * `MATCH (n1)<-[r]->(n2) RETURN n1, r, n2`
 * `MATCH (n1)-[r]->(n2) RETURN n1, r, n2`
 * `MATCH (n1)<-[r]-(n2) RETURN n1, r, n2`
@@ -48,7 +48,7 @@
 
 ## Querying basics - Filtering, Transforming
 ### Filter by properties
-* `MATCH (p {name: 'Tom Hanks', born: 1956}) RETURN p`
+* `MATCH (n {name: 'Tom Hanks', born: 1956}) RETURN n`
 * `MATCH (p:Person {name: 'Tom Hanks', born: 1956}) RETURN p`
 ### WHERE clause
 * `MATCH (p:Person) WHERE p.name = 'Tom Hanks' AND p.born = 1956 RETURN p`
@@ -124,11 +124,53 @@
 
 ## Querying basics - Aggregation and other basic functions
 ### Removing Duplicates with DISTINCT
+* ```
+    MATCH (p:Person)-[r:ACTED_IN]-(m:Movie)
+    WHERE r.earnings > 10000000
+    RETURN DISTINCT p.name
+    ```
 ### Aggregation functions (COUNT, AVG, SUM, MIN, MAX)
+* ```
+    MATCH (p:Person {name: 'Tom Hanks'})-[:ACTED_IN]->(m:Movie)
+    RETURN COUNT(m)
+    ```
+* ```
+    MATCH (p:Person {name: 'Tom Hanks'})-[r:ACTED_IN]->(m:Movie)
+    RETURN SUM(r.earnings)
+    ```
+* ```
+    MATCH (p:Person {name: 'Tom Hanks'})-[r:ACTED_IN]->(m:Movie)
+    RETURN AVG(r.earnings)
+    ```
+* ```
+    MATCH (p:Person {name: 'Tom Hanks'})-[r:ACTED_IN]->(m:Movie)
+    RETURN MIN(r.earnings)
+    ```
+* ```
+    MATCH (p:Person {name: 'Tom Hanks'})-[r:ACTED_IN]->(m:Movie)
+    RETURN MAX(r.earnings)
+    ```
 ### String functions
+> Doc: https://neo4j.com/docs/cypher-manual/current/functions/string/
+* `RETURN true AS asBoolean, toString(true) AS asString`
+* `RETURN toUpper('Oh My God')`
+* `RETURN toLower('Oh My God')`
+* `RETURN trim(' Oh My God ')`
+* `RETURN replace('Oh My God', 'God', 'Father')`
 ### Math functions
+* `RETURN floor(1.6)`
+* `RETURN ceil(1.6)`
+* `RETURN round(1.6)`
 ### Exercise \#1
-### Exercise \#2
+> Find the actor with the highest average earnings per movie.</br>
+    Round their earnings and display the Actor's name in uppercase characters
+* ```
+    MATCH (p:Person)-[r:ACTED_IN]->(m:Movie)
+    WITH toUpper(p.name) AS Name, round(AVG(r.earnings)) AS AverageEarnings
+    ORDER BY AverageEarnings DESC
+    RETURN Name, AverageEarnings
+    LIMIT 1
+    ```
 
 ## Create
 ### Nodes
